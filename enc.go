@@ -8,14 +8,25 @@ import (
 )
 
 // SignData ...
-func SignData(data string) error {
-	_, stderr, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--sign"))
+func SignData(data string) (bytes.Buffer, error) {
+	stdout, stderr, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--sign"))
 	if err != nil {
 		log.Print(stderr.String())
-		return err
+		return stdout, err
 	}
 
-	return nil
+	return stdout, nil
+}
+
+// ClearSignData ...
+func ClearSignData(data string) (bytes.Buffer, error) {
+	stdout, stderr, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--clearsign"))
+	if err != nil {
+		log.Print(stderr.String())
+		return stdout, err
+	}
+
+	return stdout, nil
 }
 
 // SignDataWithPass ...

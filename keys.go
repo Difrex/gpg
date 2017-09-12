@@ -137,6 +137,30 @@ func ExctractPubKey(id string) (string, error) {
 	return stdout.String(), err
 }
 
+// ImportPubkey ...
+func ImportPubkey(pubkey string) (string, error) {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("gpg", "--import")
+
+	cmd.Stdin = strings.NewReader(pubkey)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		return stderr.String(), err
+	}
+
+	// Extract gpgid
+	var gpgid string
+	for _, line := range strings.Split(stdout.String(), "\n") {
+		if strings.Contains(line, "public key") || strings.Contains(line, "not changed") {
+			gpgid = strings.TrimRight(strings.Split(line, " ")[2], ":")
+		}
+	}
+	return gpgid, nil
+}
+
 // execCmd ...
 func execCmd(cmd *exec.Cmd) (bytes.Buffer, bytes.Buffer, error) {
 	var stdout bytes.Buffer
