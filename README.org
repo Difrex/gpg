@@ -1,0 +1,7 @@
+* gpg
+
+Golang bindings to GnuPG.
+
+* TODO Functions
+
+* TODO Examples
