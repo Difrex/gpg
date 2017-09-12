@@ -26,7 +26,7 @@ type SubKey struct {
 
 // DeleteKey Delete key from gpg db
 func DeleteKey(id string) error {
-	_, stderr, err := ExecCmd(exec.Command("gpg", "--batch", "--yes", "--delete-keys", id))
+	_, stderr, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--delete-keys", id))
 	if err != nil {
 		log.Print(stderr.String(), err)
 		return err
@@ -37,7 +37,7 @@ func DeleteKey(id string) error {
 
 // ShowKey Get key from db
 func ShowKey(id string) (Key, error) {
-	stdout, stderr, err := ExecCmd(exec.Command("gpg", "--keyid-format", "LONG", "--with-colons", "--list-keys", id))
+	stdout, stderr, err := execCmd(exec.Command("gpg", "--keyid-format", "LONG", "--with-colons", "--list-keys", id))
 	if err != nil {
 		log.Print(stderr.String())
 		return Key{}, err
@@ -64,7 +64,7 @@ func ShowKey(id string) (Key, error) {
 
 // ListSecretKeys list secret keys from ~/.gnupg/
 func ListSecretKeys() ([]Key, error) {
-	stdout, stderr, err := ExecCmd(exec.Command("gpg", "--list-secret-keys", "--with-colons"))
+	stdout, stderr, err := execCmd(exec.Command("gpg", "--list-secret-keys", "--with-colons"))
 	if err != nil {
 		log.Print(stderr.String(), err)
 	}
@@ -87,7 +87,7 @@ func ListSecretKeys() ([]Key, error) {
 
 // GetSubkey Extract subkey info by secret key ID
 func GetSubkey(id string) (SubKey, error) {
-	stdout, stderr, err := ExecCmd(exec.Command("gpg", "--keyid-format", "LONG", "--list-key", id))
+	stdout, stderr, err := execCmd(exec.Command("gpg", "--keyid-format", "LONG", "--list-key", id))
 	if err != nil {
 		log.Print(stderr.String())
 		log.Print(err)
@@ -128,7 +128,7 @@ func GetSubkey(id string) (SubKey, error) {
 
 // ExctractPubKey ...
 func ExctractPubKey(id string) (string, error) {
-	stdout, stderr, err := ExecCmd(exec.Command("gpg", "--armour", "--export", id))
+	stdout, stderr, err := execCmd(exec.Command("gpg", "--armour", "--export", id))
 	if err != nil {
 		log.Print(err)
 		return stderr.String(), err
@@ -137,8 +137,8 @@ func ExctractPubKey(id string) (string, error) {
 	return stdout.String(), err
 }
 
-// ExecCmd ...
-func ExecCmd(cmd *exec.Cmd) (bytes.Buffer, bytes.Buffer, error) {
+// execCmd ...
+func execCmd(cmd *exec.Cmd) (bytes.Buffer, bytes.Buffer, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 

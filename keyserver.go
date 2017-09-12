@@ -36,7 +36,7 @@ func RecvKeyFromSKSAndSignWithPass(gpgid string, password string, sks string) er
 
 // RecvKeyFromSKS Recieve pubkey from SKS
 func RecvKeyFromSKS(gpgid string, sks string) error {
-	_, _, err := ExecCmd(exec.Command("gpg", "--keyserver", sks, "--recv-keys", gpgid))
+	_, _, err := execCmd(exec.Command("gpg", "--keyserver", sks, "--recv-keys", gpgid))
 	if err != nil {
 		return err
 	}

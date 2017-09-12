@@ -9,7 +9,7 @@ import (
 
 // SignData ...
 func SignData(data string) error {
-	_, stderr, err := ExecCmd(exec.Command("gpg", "--batch", "--yes", "--sign"))
+	_, stderr, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--sign"))
 	if err != nil {
 		log.Print(stderr.String())
 		return err
@@ -38,7 +38,7 @@ func SignDataWithPass(data string, password string) (bytes.Buffer, error) {
 
 // SignKey ...
 func SignKey(gpgid string) error {
-	_, stderr, err := ExecCmd(exec.Command("gpg", "--batch", "--yes", "--sign-key", gpgid))
+	_, stderr, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--sign-key", gpgid))
 	if err != nil {
 		log.Print(stderr.String())
 		return err
@@ -49,7 +49,7 @@ func SignKey(gpgid string) error {
 
 // SignKeyWithPassword ...
 func SignKeyWithPassword(gpgid string, password string) error {
-	_, _, err := ExecCmd(exec.Command("gpg", "--batch", "--yes", "--passphrase", password, "--sign-key", gpgid))
+	_, _, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--passphrase", password, "--sign-key", gpgid))
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func SignKeyWithPassword(gpgid string, password string) error {
 
 // Verify signature
 func Verify(data string) (bool, error) {
-	_, _, err := ExecCmd(exec.Command("gpg", "--verify"))
+	_, _, err := execCmd(exec.Command("gpg", "--verify"))
 	if err != nil {
 		return false, err
 	}
@@ -69,7 +69,7 @@ func Verify(data string) (bool, error) {
 
 // ExtractDataFromSigned ...
 func ExtractDataFromSigned(data string) (bytes.Buffer, error) {
-	stdout, stderr, err := ExecCmd(exec.Command("gpg", "-d"))
+	stdout, stderr, err := execCmd(exec.Command("gpg", "-d"))
 	if err != nil {
 		return stderr, err
 	}
@@ -79,7 +79,7 @@ func ExtractDataFromSigned(data string) (bytes.Buffer, error) {
 
 // DetachSign return detached signature as bytes.Buffer
 func DetachSign(data string) (bytes.Buffer, error) {
-	stdout, stderr, err := ExecCmd(exec.Command("gpg", "--detach"))
+	stdout, stderr, err := execCmd(exec.Command("gpg", "--detach"))
 	if err != nil {
 		return stderr, err
 	}
