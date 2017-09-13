@@ -2,9 +2,10 @@ package gpg
 
 import (
 	"bytes"
-	"log"
 	"os/exec"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // SignData ...
@@ -64,25 +65,45 @@ func SignKeyWithPassword(gpgid string, password string) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
 // Verify signature
-func Verify(data string) (bool, error) {
-	_, _, err := execCmd(exec.Command("gpg", "--verify"))
+func Verify(data string) (string, error) {
+	var stdout bytes.Buffer
+	cmd := exec.Command("gpg", "--verify")
+	cmd.Stdin = strings.NewReader(data)
+	cmd.Stderr = &stdout
+
+	err := cmd.Run()
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
-	return true, nil
+	// Extract gpgid
+	var gpgid string
+	for _, line := range strings.Split(stdout.String(), "\n") {
+		if strings.Contains(line, "using RSA key") {
+			rsaLine := strings.Split(line, " ")
+			gpgid = rsaLine[len(rsaLine)-1]
+		}
+	}
+
+	log.Error(gpgid)
+	return gpgid, nil
 }
 
 // ExtractDataFromSigned ...
 func ExtractDataFromSigned(data string) (bytes.Buffer, error) {
-	stdout, stderr, err := execCmd(exec.Command("gpg", "-d"))
+	var stdout bytes.Buffer
+
+	cmd := exec.Command("gpg", "-d")
+	cmd.Stdin = strings.NewReader(data)
+	cmd.Stdout = &stdout
+
+	err := cmd.Run()
 	if err != nil {
-		return stderr, err
+		return stdout, err
 	}
 
 	return stdout, nil
@@ -139,6 +160,43 @@ func EncryptData(gpgid string, data string) (string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	cmd := exec.Command("gpg", "--encrypt", "--recipient", gpgid)
+
+	cmd.Stdin = strings.NewReader(data)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		return stderr.String(), err
+	}
+
+	return stdout.String(), nil
+}
+
+// EncryptArmorData ...
+func EncryptArmorData(gpgid string, data string) (string, error) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Command("gpg", "--encrypt", "--armor", "--batch", "--yes", "--recipient", gpgid)
+
+	cmd.Stdin = strings.NewReader(data)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		log.Error(stdout.String())
+		log.Error(stderr.String())
+		return stderr.String(), err
+	}
+
+	return stdout.String(), nil
+}
+
+func EncryptArmorDataWithPassword(gpgid, data, password string) (string, error) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Command("gpg", "--encrypt", "--armor", "--batch", "--yes", "--passphrase", password, "--recipient", gpgid)
 
 	cmd.Stdin = strings.NewReader(data)
 	cmd.Stdout = &stdout

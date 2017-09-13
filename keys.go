@@ -2,11 +2,12 @@ package gpg
 
 import (
 	"bytes"
-	"log"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // Key GPG key information
@@ -153,9 +154,10 @@ func ImportPubkey(pubkey string) (string, error) {
 
 	// Extract gpgid
 	var gpgid string
-	for _, line := range strings.Split(stdout.String(), "\n") {
+	for _, line := range strings.Split(stderr.String(), "\n") {
+		log.Warn(line)
 		if strings.Contains(line, "public key") || strings.Contains(line, "not changed") {
-			gpgid = strings.TrimRight(strings.Split(line, " ")[2], ":")
+			gpgid = strings.TrimSuffix(strings.Split(line, " ")[2], ":")
 		}
 	}
 	return gpgid, nil
