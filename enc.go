@@ -89,7 +89,6 @@ func Verify(data string) (string, error) {
 		}
 	}
 
-	log.Error(gpgid)
 	return gpgid, nil
 }
 
