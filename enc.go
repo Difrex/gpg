@@ -10,10 +10,17 @@ import (
 
 // SignData ...
 func SignData(data string) (bytes.Buffer, error) {
-	stdout, stderr, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--sign"))
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Command("gpg", "--batch", "--yes", "--sign")
+
+	cmd.Stdin = strings.NewReader(data)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
 	if err != nil {
-		log.Print(stderr.String())
-		return stdout, err
+		return stderr, err
 	}
 
 	return stdout, nil
@@ -21,10 +28,17 @@ func SignData(data string) (bytes.Buffer, error) {
 
 // ClearSignData ...
 func ClearSignData(data string) (bytes.Buffer, error) {
-	stdout, stderr, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--clearsign"))
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Command("gpg", "--batch", "--yes", "--clearsign")
+
+	cmd.Stdin = strings.NewReader(data)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
 	if err != nil {
-		log.Print(stderr.String())
-		return stdout, err
+		return stderr, err
 	}
 
 	return stdout, nil
