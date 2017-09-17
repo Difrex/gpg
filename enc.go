@@ -2,11 +2,26 @@ package gpg
 
 import (
 	"bytes"
+	"math/rand"
+	"os"
 	"os/exec"
 	"strings"
 
+	"io/ioutil"
+
 	log "github.com/Sirupsen/logrus"
 )
+
+// getRandString ...
+func getRandString(length int) string {
+	letterBytes := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
+}
 
 // SignData ...
 func SignData(data string) (bytes.Buffer, error) {
@@ -26,6 +41,49 @@ func SignData(data string) (bytes.Buffer, error) {
 	return stdout, nil
 }
 
+// SignDataNoBatch ...
+func SignDataNoBatch(data string) ([]byte, error) {
+	to_write := strings.Join([]string{"/tmp/", getRandString(10)}, "")
+
+	f, err := os.Create(to_write)
+	if err != nil {
+		return []byte(""), err
+	}
+	defer f.Close()
+
+	_, err = f.Write([]byte(data))
+	if err != nil {
+		return []byte(""), err
+	}
+	cmd := exec.Command("gpg", "--sign", to_write)
+	if err != nil {
+		os.Remove(to_write)
+		return []byte(""), err
+	}
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err = cmd.Run()
+	if err != nil {
+		os.Remove(to_write)
+		return []byte(""), err
+	}
+
+	signed := strings.Join([]string{to_write, ".asc"}, "")
+	sig, err := ioutil.ReadFile(signed)
+	if err != nil {
+		os.Remove(to_write)
+		os.Remove(signed)
+		return []byte(""), err
+	}
+
+	os.Remove(to_write)
+	os.Remove(signed)
+	return sig, nil
+}
+
 // ClearSignData ...
 func ClearSignData(data string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
@@ -42,6 +100,92 @@ func ClearSignData(data string) (bytes.Buffer, error) {
 	}
 
 	return stdout, nil
+}
+
+// ClearSignDataNoBatch ...
+func ClearSignDataNoBatch(data string) ([]byte, error) {
+	to_write := strings.Join([]string{"/tmp/", getRandString(10)}, "")
+
+	f, err := os.Create(to_write)
+	if err != nil {
+		return []byte(""), err
+	}
+	defer f.Close()
+
+	_, err = f.Write([]byte(data))
+	if err != nil {
+		return []byte(""), err
+	}
+	cmd := exec.Command("gpg", "--clearsign", to_write)
+	if err != nil {
+		os.Remove(to_write)
+		return []byte(""), err
+	}
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err = cmd.Run()
+	if err != nil {
+		os.Remove(to_write)
+		return []byte(""), err
+	}
+
+	signed := strings.Join([]string{to_write, ".asc"}, "")
+	sig, err := ioutil.ReadFile(signed)
+	if err != nil {
+		os.Remove(to_write)
+		os.Remove(signed)
+		return []byte(""), err
+	}
+
+	os.Remove(to_write)
+	os.Remove(signed)
+	return sig, nil
+}
+
+// ClearSignDataNoBatch ...
+func ClearSignDataWithNoBatch(data, gpgid string) ([]byte, error) {
+	to_write := strings.Join([]string{"/tmp/", getRandString(10)}, "")
+
+	f, err := os.Create(to_write)
+	if err != nil {
+		return []byte(""), err
+	}
+	defer f.Close()
+
+	_, err = f.Write([]byte(data))
+	if err != nil {
+		return []byte(""), err
+	}
+	cmd := exec.Command("gpg", "--clearsign", "--sign-with", gpgid, to_write)
+	if err != nil {
+		os.Remove(to_write)
+		return []byte(""), err
+	}
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err = cmd.Run()
+	if err != nil {
+		os.Remove(to_write)
+		return []byte(""), err
+	}
+
+	signed := strings.Join([]string{to_write, ".asc"}, "")
+	sig, err := ioutil.ReadFile(signed)
+	if err != nil {
+		os.Remove(to_write)
+		os.Remove(signed)
+		return []byte(""), err
+	}
+
+	os.Remove(to_write)
+	os.Remove(signed)
+	return sig, nil
 }
 
 // SignDataWithPass ...
