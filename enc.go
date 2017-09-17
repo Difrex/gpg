@@ -41,7 +41,7 @@ func SignData(data string) (bytes.Buffer, error) {
 	return stdout, nil
 }
 
-// SignDataNoBatch ...
+// SignDataNoBatch return signature
 func SignDataNoBatch(data string) ([]byte, error) {
 	to_write := strings.Join([]string{"/tmp/", getRandString(10)}, "")
 
@@ -71,7 +71,7 @@ func SignDataNoBatch(data string) ([]byte, error) {
 		return []byte(""), err
 	}
 
-	signed := strings.Join([]string{to_write, ".asc"}, "")
+	signed := strings.Join([]string{to_write, ".gpg"}, "")
 	sig, err := ioutil.ReadFile(signed)
 	if err != nil {
 		os.Remove(to_write)
