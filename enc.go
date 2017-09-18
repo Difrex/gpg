@@ -8,11 +8,9 @@ import (
 	"strings"
 
 	"io/ioutil"
-
-	log "github.com/Sirupsen/logrus"
 )
 
-// getRandString ...
+// getRandString return random generated string
 func getRandString(length int) string {
 	letterBytes := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -23,7 +21,7 @@ func getRandString(length int) string {
 	return string(b)
 }
 
-// SignData ...
+// SignData make gpg signature
 func SignData(data string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -41,7 +39,7 @@ func SignData(data string) (bytes.Buffer, error) {
 	return stdout, nil
 }
 
-// SignDataNoBatch return signature
+// SignDataNoBatch make gpg signature with interactive terminal
 func SignDataNoBatch(data string) ([]byte, error) {
 	to_write := strings.Join([]string{"/tmp/", getRandString(10)}, "")
 
@@ -84,7 +82,7 @@ func SignDataNoBatch(data string) ([]byte, error) {
 	return sig, nil
 }
 
-// ClearSignData ...
+// ClearSignData make clear signature
 func ClearSignData(data string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -102,7 +100,7 @@ func ClearSignData(data string) (bytes.Buffer, error) {
 	return stdout, nil
 }
 
-// ClearSignDataNoBatch ...
+// ClearSignDataNoBatch make clear signature with interactive terminal
 func ClearSignDataNoBatch(data string) ([]byte, error) {
 	to_write := strings.Join([]string{"/tmp/", getRandString(10)}, "")
 
@@ -145,7 +143,7 @@ func ClearSignDataNoBatch(data string) ([]byte, error) {
 	return sig, nil
 }
 
-// ClearSignDataNoBatch ...
+// ClearSignDataWithNoBatch make clear signature with provided gpgid and interactive terminal
 func ClearSignDataWithNoBatch(data, gpgid string) ([]byte, error) {
 	to_write := strings.Join([]string{"/tmp/", getRandString(10)}, "")
 
@@ -188,7 +186,7 @@ func ClearSignDataWithNoBatch(data, gpgid string) ([]byte, error) {
 	return sig, nil
 }
 
-// SignDataWithPass ...
+// SignDataWithPass make gpg signature with provided password
 func SignDataWithPass(data string, password string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -208,9 +206,8 @@ func SignDataWithPass(data string, password string) (bytes.Buffer, error) {
 
 // SignKey ...
 func SignKey(gpgid string) error {
-	_, stderr, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--sign-key", gpgid))
+	_, _, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--sign-key", gpgid))
 	if err != nil {
-		log.Print(stderr.String())
 		return err
 	}
 
@@ -250,7 +247,7 @@ func Verify(data string) (string, error) {
 	return gpgid, nil
 }
 
-// ExtractDataFromSigned ...
+// ExtractDataFromSigned extract data from clear signed data
 func ExtractDataFromSigned(data string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
 
@@ -342,14 +339,13 @@ func EncryptArmorData(gpgid string, data string) (string, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		log.Error(stdout.String())
-		log.Error(stderr.String())
 		return stderr.String(), err
 	}
 
 	return stdout.String(), nil
 }
 
+// EncryptArmorDataWithPassword ...
 func EncryptArmorDataWithPassword(gpgid, data, password string) (string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
