@@ -69,6 +69,7 @@ func SignDataNoBatch(data string) ([]byte, error) {
 		return []byte(""), err
 	}
 
+	// read PGP signature
 	signed := strings.Join([]string{to_write, ".gpg"}, "")
 	sig, err := ioutil.ReadFile(signed)
 	if err != nil {
@@ -216,10 +217,16 @@ func SignKey(gpgid string) error {
 
 // SignKeyWithPassword ...
 func SignKeyWithPassword(gpgid string, password string) error {
-	_, _, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--passphrase", password, "--sign-key", gpgid))
+	cmd := exec.Command("gpg", "--passphrase", password, "--sign-key", gpgid)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 

@@ -43,3 +43,13 @@ func RecvKeyFromSKS(gpgid string, sks string) error {
 
 	return nil
 }
+
+// SendKeyToSKS send pubkey to remote keyserver
+func SendKeyToSKS(gpgid, sks string) error {
+	_, _, err := execCmd(exec.Command("gpg", "--keyserver", sks, "--send-keys", gpgid))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
