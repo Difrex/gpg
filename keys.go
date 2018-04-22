@@ -127,8 +127,8 @@ func GetSubkey(id string) (SubKey, error) {
 	return subkey, err
 }
 
-// ExctractPubKey ...
-func ExctractPubKey(id string) (string, error) {
+// ExtractPubKey ...
+func ExtractPubKey(id string) (string, error) {
 	stdout, stderr, err := execCmd(exec.Command("gpg", "--armour", "--export", id))
 	if err != nil {
 		log.Print(err)
