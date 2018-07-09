@@ -317,6 +317,25 @@ func DecryptDataWithPass(data string, password string) (bytes.Buffer, error) {
 	return stdout, nil
 }
 
+// DecryptFile in provided path
+// return error
+func DecryptFile(path, output string) error {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Command("gpg", "--output", output, "--decrypt", path)
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		e := errors.New(stderr.String())
+		return e
+	}
+
+	return nil
+}
+
 // EncryptFile in provided path
 // return error
 func EncryptFile(gpgid, path, output string) error {
