@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"errors"
 	"io/ioutil"
 )
 
@@ -314,6 +315,83 @@ func DecryptDataWithPass(data string, password string) (bytes.Buffer, error) {
 	}
 
 	return stdout, nil
+}
+
+// EncryptFile in provided path
+// return error
+func EncryptFile(gpgid, path, output string) error {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Command("gpg", "--output", output, "--recipient", gpgid, "--encrypt", path)
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		e := errors.New(stderr.String())
+		return e
+	}
+
+	return nil
+}
+
+// EncryptFileRecipientSelf in provided path
+// return error
+func EncryptFileRecipientSelf(path, output string) error {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Command("gpg", "--output", output, "--default-recipient-self", "--encrypt", path)
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		e := errors.New(stderr.String())
+		return e
+	}
+
+	return nil
+}
+
+// EncryptArmorFile in provided path
+// return error
+func EncryptArmorFile(gpgid, path, output string) error {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Command("gpg", "--output", output, "--recipient", gpgid, "--encrypt", "--armor", path)
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		e := errors.New(stderr.String())
+		return e
+	}
+
+	return nil
+}
+
+// EncryptArmorFileRecipientSelf in provided path
+// return error
+func EncryptArmorFileRecipientSelf(path, output string) error {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Command("gpg", "--output", output, "--default-recipient-self",
+		"--encrypt", "--armor", path)
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		e := errors.New(stderr.String())
+		return e
+	}
+
+	return nil
 }
 
 // EncryptData ...
