@@ -255,6 +255,16 @@ func Verify(data string) (string, error) {
 	return gpgid, nil
 }
 
+// VerifyFile runs gpg --verify /path/to/signature.asc
+func VerifyFile(signaturePath string) (bool, error) {
+	cmd := exec.Command("gpg", "--verify", signaturePath)
+	if err := cmd.Run(); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 // ExtractDataFromSigned extract data from clear signed data
 func ExtractDataFromSigned(data string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
