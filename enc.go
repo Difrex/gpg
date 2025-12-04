@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"errors"
-	"io/ioutil"
 )
 
 // getRandString return random generated string
@@ -26,7 +25,7 @@ func getRandString(length int) string {
 func SignData(data string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--batch", "--yes", "--sign")
+	cmd := exec.Command(gpgExecutable(), "--batch", "--yes", "--sign")
 
 	cmd.Stdin = strings.NewReader(data)
 	cmd.Stdout = &stdout
@@ -54,7 +53,7 @@ func SignDataNoBatch(data string) ([]byte, error) {
 	if err != nil {
 		return []byte(""), err
 	}
-	cmd := exec.Command("gpg", "--sign", to_write)
+	cmd := exec.Command(gpgExecutable(), "--sign", to_write)
 	if err != nil {
 		os.Remove(to_write)
 		return []byte(""), err
@@ -72,7 +71,7 @@ func SignDataNoBatch(data string) ([]byte, error) {
 
 	// read PGP signature
 	signed := strings.Join([]string{to_write, ".gpg"}, "")
-	sig, err := ioutil.ReadFile(signed)
+	sig, err := os.ReadFile(signed)
 	if err != nil {
 		os.Remove(to_write)
 		os.Remove(signed)
@@ -88,7 +87,7 @@ func SignDataNoBatch(data string) ([]byte, error) {
 func ClearSignData(data string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--batch", "--yes", "--clearsign")
+	cmd := exec.Command(gpgExecutable(), "--batch", "--yes", "--clearsign")
 
 	cmd.Stdin = strings.NewReader(data)
 	cmd.Stdout = &stdout
@@ -116,7 +115,7 @@ func ClearSignDataNoBatch(data string) ([]byte, error) {
 	if err != nil {
 		return []byte(""), err
 	}
-	cmd := exec.Command("gpg", "--clearsign", to_write)
+	cmd := exec.Command(gpgExecutable(), "--clearsign", to_write)
 	if err != nil {
 		os.Remove(to_write)
 		return []byte(""), err
@@ -133,7 +132,7 @@ func ClearSignDataNoBatch(data string) ([]byte, error) {
 	}
 
 	signed := strings.Join([]string{to_write, ".asc"}, "")
-	sig, err := ioutil.ReadFile(signed)
+	sig, err := os.ReadFile(signed)
 	if err != nil {
 		os.Remove(to_write)
 		os.Remove(signed)
@@ -159,7 +158,7 @@ func ClearSignDataWithNoBatch(data, gpgid string) ([]byte, error) {
 	if err != nil {
 		return []byte(""), err
 	}
-	cmd := exec.Command("gpg", "--clearsign", "--sign-with", gpgid, to_write)
+	cmd := exec.Command(gpgExecutable(), "--clearsign", "--sign-with", gpgid, to_write)
 	if err != nil {
 		os.Remove(to_write)
 		return []byte(""), err
@@ -176,7 +175,7 @@ func ClearSignDataWithNoBatch(data, gpgid string) ([]byte, error) {
 	}
 
 	signed := strings.Join([]string{to_write, ".asc"}, "")
-	sig, err := ioutil.ReadFile(signed)
+	sig, err := os.ReadFile(signed)
 	if err != nil {
 		os.Remove(to_write)
 		os.Remove(signed)
@@ -192,7 +191,7 @@ func ClearSignDataWithNoBatch(data, gpgid string) ([]byte, error) {
 func SignDataWithPass(data string, password string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--batch", "--yes", "--password", password, "--sign")
+	cmd := exec.Command(gpgExecutable(), "--batch", "--yes", "--password", password, "--sign")
 
 	cmd.Stdin = strings.NewReader(data)
 	cmd.Stdout = &stdout
@@ -208,7 +207,7 @@ func SignDataWithPass(data string, password string) (bytes.Buffer, error) {
 
 // SignKey ...
 func SignKey(gpgid string) error {
-	_, _, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--sign-key", gpgid))
+	_, _, err := execCmd(exec.Command(gpgExecutable(), "--batch", "--yes", "--sign-key", gpgid))
 	if err != nil {
 		return err
 	}
@@ -218,7 +217,7 @@ func SignKey(gpgid string) error {
 
 // SignKeyWithPassword ...
 func SignKeyWithPassword(gpgid string, password string) error {
-	cmd := exec.Command("gpg", "--passphrase", password, "--sign-key", gpgid)
+	cmd := exec.Command(gpgExecutable(), "--passphrase", password, "--sign-key", gpgid)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -234,7 +233,7 @@ func SignKeyWithPassword(gpgid string, password string) error {
 // Verify signature
 func Verify(data string) (string, error) {
 	var stdout bytes.Buffer
-	cmd := exec.Command("gpg", "--verify")
+	cmd := exec.Command(gpgExecutable(), "--verify")
 	cmd.Stdin = strings.NewReader(data)
 	cmd.Stderr = &stdout
 
@@ -257,7 +256,7 @@ func Verify(data string) (string, error) {
 
 // VerifyFile runs gpg --verify /path/to/signature.asc
 func VerifyFile(signaturePath string) (bool, error) {
-	cmd := exec.Command("gpg", "--verify", signaturePath)
+	cmd := exec.Command(gpgExecutable(), "--verify", signaturePath)
 	if err := cmd.Run(); err != nil {
 		return false, err
 	}
@@ -269,7 +268,7 @@ func VerifyFile(signaturePath string) (bool, error) {
 func ExtractDataFromSigned(data string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
 
-	cmd := exec.Command("gpg", "-d")
+	cmd := exec.Command(gpgExecutable(), "-d")
 	cmd.Stdin = strings.NewReader(data)
 	cmd.Stdout = &stdout
 
@@ -283,7 +282,7 @@ func ExtractDataFromSigned(data string) (bytes.Buffer, error) {
 
 // DetachSign return detached signature as bytes.Buffer
 func DetachSign(data string) (bytes.Buffer, error) {
-	stdout, stderr, err := execCmd(exec.Command("gpg", "--detach"))
+	stdout, stderr, err := execCmd(exec.Command(gpgExecutable(), "--detach"))
 	if err != nil {
 		return stderr, err
 	}
@@ -295,7 +294,7 @@ func DetachSign(data string) (bytes.Buffer, error) {
 func DetachSignWithPass(data string, password string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--batch", "--yes", "--passphrase", password, "--detach-sign")
+	cmd := exec.Command(gpgExecutable(), "--batch", "--yes", "--passphrase", password, "--detach-sign")
 
 	cmd.Stdin = strings.NewReader(data)
 	cmd.Stdout = &stdout
@@ -313,7 +312,7 @@ func DetachSignWithPass(data string, password string) (bytes.Buffer, error) {
 func DecryptDataWithPass(data string, password string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--batch", "--yes", "--passphrase", password, "-d")
+	cmd := exec.Command(gpgExecutable(), "--batch", "--yes", "--passphrase", password, "-d")
 
 	cmd.Stdin = strings.NewReader(data)
 	cmd.Stdout = &stdout
@@ -332,7 +331,7 @@ func DecryptDataWithPass(data string, password string) (bytes.Buffer, error) {
 func DecryptFile(path, output string) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--output", output, "--decrypt", path)
+	cmd := exec.Command(gpgExecutable(), "--output", output, "--decrypt", path)
 
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -351,7 +350,7 @@ func DecryptFile(path, output string) error {
 func EncryptFile(gpgid, path, output string) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--output", output, "--recipient", gpgid, "--encrypt", path)
+	cmd := exec.Command(gpgExecutable(), "--output", output, "--recipient", gpgid, "--encrypt", path)
 
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -370,7 +369,7 @@ func EncryptFile(gpgid, path, output string) error {
 func EncryptFileRecipientSelf(path, output string) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--output", output, "--default-recipient-self", "--encrypt", path)
+	cmd := exec.Command(gpgExecutable(), "--output", output, "--default-recipient-self", "--encrypt", path)
 
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -389,7 +388,7 @@ func EncryptFileRecipientSelf(path, output string) error {
 func EncryptArmorFile(gpgid, path, output string) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--output", output, "--recipient", gpgid, "--encrypt", "--armor", path)
+	cmd := exec.Command(gpgExecutable(), "--output", output, "--recipient", gpgid, "--encrypt", "--armor", path)
 
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -408,7 +407,7 @@ func EncryptArmorFile(gpgid, path, output string) error {
 func EncryptArmorFileRecipientSelf(path, output string) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--output", output, "--default-recipient-self",
+	cmd := exec.Command(gpgExecutable(), "--output", output, "--default-recipient-self",
 		"--encrypt", "--armor", path)
 
 	cmd.Stdout = &stdout
@@ -427,7 +426,7 @@ func EncryptArmorFileRecipientSelf(path, output string) error {
 func EncryptData(gpgid string, data string) (string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--encrypt", "--recipient", gpgid)
+	cmd := exec.Command(gpgExecutable(), "--encrypt", "--recipient", gpgid)
 
 	cmd.Stdin = strings.NewReader(data)
 	cmd.Stdout = &stdout
@@ -445,7 +444,7 @@ func EncryptData(gpgid string, data string) (string, error) {
 func EncryptArmorData(gpgid string, data string) (string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--encrypt", "--armor", "--batch", "--yes", "--recipient", gpgid)
+	cmd := exec.Command(gpgExecutable(), "--encrypt", "--armor", "--batch", "--yes", "--recipient", gpgid)
 
 	cmd.Stdin = strings.NewReader(data)
 	cmd.Stdout = &stdout
@@ -463,7 +462,7 @@ func EncryptArmorData(gpgid string, data string) (string, error) {
 func EncryptArmorDataWithPassword(gpgid, data, password string) (string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--encrypt", "--armor", "--batch", "--yes", "--passphrase", password, "--recipient", gpgid)
+	cmd := exec.Command(gpgExecutable(), "--encrypt", "--armor", "--batch", "--yes", "--passphrase", password, "--recipient", gpgid)
 
 	cmd.Stdin = strings.NewReader(data)
 	cmd.Stdout = &stdout

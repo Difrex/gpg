@@ -2,12 +2,11 @@ package gpg
 
 import (
 	"bytes"
+	"fmt"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // Key GPG key information
@@ -27,21 +26,15 @@ type SubKey struct {
 
 // DeleteKey Delete key from gpg db
 func DeleteKey(id string) error {
-	_, stderr, err := execCmd(exec.Command("gpg", "--batch", "--yes", "--delete-keys", id))
-	if err != nil {
-		log.Print(stderr.String(), err)
-		return err
-	}
-
-	return nil
+	_, stderr, err := execCmd(exec.Command(gpgExecutable(), "--batch", "--yes", "--delete-keys", id))
+	return fmt.Errorf("Error: %s\n%s", err, stderr.String())
 }
 
 // ShowKey Get key from db
 func ShowKey(id string) (Key, error) {
-	stdout, stderr, err := execCmd(exec.Command("gpg", "--keyid-format", "LONG", "--with-colons", "--list-keys", id))
+	stdout, stderr, err := execCmd(exec.Command(gpgExecutable(), "--keyid-format", "LONG", "--with-colons", "--list-keys", id))
 	if err != nil {
-		log.Print(stderr.String())
-		return Key{}, err
+		return Key{}, fmt.Errorf("Error: %s\n%s", err, stderr.String())
 	}
 
 	var k Key
@@ -50,7 +43,7 @@ func ShowKey(id string) (Key, error) {
 		if key[0] == "pub" {
 			keySize, err := strconv.Atoi(key[2])
 			if err != nil {
-				log.Print(err)
+				return Key{}, err
 			}
 			k.Created = key[5]
 			k.Size = keySize
@@ -65,9 +58,9 @@ func ShowKey(id string) (Key, error) {
 
 // ListSecretKeys list secret keys from ~/.gnupg/
 func ListSecretKeys() ([]Key, error) {
-	stdout, stderr, err := execCmd(exec.Command("gpg", "--list-secret-keys", "--with-colons"))
+	stdout, stderr, err := execCmd(exec.Command(gpgExecutable(), "--list-secret-keys", "--with-colons"))
 	if err != nil {
-		log.Print(stderr.String(), err)
+		return nil, fmt.Errorf("Error: %s\n%s", err, stderr.String())
 	}
 
 	var keys []Key
@@ -75,10 +68,7 @@ func ListSecretKeys() ([]Key, error) {
 	for _, line := range strings.Split(stdout.String(), "\n") {
 		key := strings.Split(line, ":")
 		if key[0] == "sec" {
-			keySize, err := strconv.Atoi(key[2])
-			if err != nil {
-				log.Print(err)
-			}
+			keySize, _ := strconv.Atoi(key[2])
 			keys = append(keys, Key{key[5], keySize, key[4], key[9]})
 		}
 	}
@@ -88,11 +78,9 @@ func ListSecretKeys() ([]Key, error) {
 
 // GetSubkey Extract subkey info by secret key ID
 func GetSubkey(id string) (SubKey, error) {
-	stdout, stderr, err := execCmd(exec.Command("gpg", "--keyid-format", "LONG", "--list-key", id))
+	stdout, stderr, err := execCmd(exec.Command(gpgExecutable(), "--keyid-format", "LONG", "--list-key", id))
 	if err != nil {
-		log.Print(stderr.String())
-		log.Print(err)
-		return SubKey{}, err
+		return SubKey{}, fmt.Errorf("Error: %s\n%s", err, stderr.String())
 	}
 
 	var subkey SubKey
@@ -108,7 +96,6 @@ func GetSubkey(id string) (SubKey, error) {
 
 			re, err := regexp.Compile("([0-9]+).")
 			if err != nil {
-				log.Print("[ERROR] ", err)
 				break
 			}
 
@@ -129,10 +116,9 @@ func GetSubkey(id string) (SubKey, error) {
 
 // ExtractPubKey ...
 func ExtractPubKey(id string) (string, error) {
-	stdout, stderr, err := execCmd(exec.Command("gpg", "--armour", "--export", id))
+	stdout, stderr, err := execCmd(exec.Command(gpgExecutable(), "--armour", "--export", id))
 	if err != nil {
-		log.Print(err)
-		return stderr.String(), err
+		return stderr.String(), fmt.Errorf("Error: %s\n%s", err, stderr.String())
 	}
 
 	return stdout.String(), err
@@ -141,7 +127,7 @@ func ExtractPubKey(id string) (string, error) {
 // ImportPubkey ...
 func ImportPubkey(pubkey string) (string, error) {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("gpg", "--import")
+	cmd := exec.Command(gpgExecutable(), "--import")
 
 	cmd.Stdin = strings.NewReader(pubkey)
 	cmd.Stdout = &stdout
@@ -155,7 +141,6 @@ func ImportPubkey(pubkey string) (string, error) {
 	// Extract gpgid
 	var gpgid string
 	for _, line := range strings.Split(stderr.String(), "\n") {
-		log.Warn(line)
 		if strings.Contains(line, "public key") || strings.Contains(line, "not changed") {
 			gpgid = strings.TrimSuffix(strings.Split(line, " ")[2], ":")
 		}
@@ -172,9 +157,5 @@ func execCmd(cmd *exec.Cmd) (bytes.Buffer, bytes.Buffer, error) {
 	cmd.Stderr = &stderr
 
 	err := cmd.Run()
-	if err != nil {
-		log.Print(stderr.String())
-	}
-
 	return stdout, stderr, err
 }
